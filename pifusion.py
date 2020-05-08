@@ -1,16 +1,6 @@
 #!/usr/bin python3
 import PySimpleGUI as sg
 
-def second_window():
-
-    layout = [[sg.Text('The second form is small \nHere to show that opening a window using a window works')],
-              [sg.OK()]]
-
-    window = sg.Window('Second Form', layout)
-    event, values = window.read()
-    window.close()
-
-
 def menus():
 
     sg.theme('Topanga')
@@ -61,9 +51,17 @@ def menus():
             filename = sg.popup_get_file('file to open', no_window=True)
             print(filename)
         elif event == 'Properties':
-            second_window()
+            window_gpio()
 
     window.close()
 
+def window_gpio():
+
+    layout = [[sg.Text('The second form is small \nHere to show that opening a window using a window works')],
+              [sg.OK()]]
+
+    window = sg.Window('Second Form', layout)
+    event, values = window.read()
+    window.close()
 
 menus()
