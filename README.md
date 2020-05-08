@@ -19,12 +19,29 @@ Pi Fusion is still in the development stage and some things are still not workin
 - Hardware: Raspberry Pi
   - Tested with: Raspberry Pi 4B (4GB)
 - Operating system: Raspbian GNU Linux
-  - Tested with: Rasbian GNU Linux Buster
+  - Tested with: Rasbian GNU Linux Buster (Kernel 4.19)
 - Software packages:
   - Python 3.7.3+
-    - Python package: psutil 5.7.0
+    - Python package: pysimplegui (4.19.0)
+    - Python package: psutil (5.7.0)
 
 ## Installation:
+
+Update your system:
+
+```
+sudo apt update && sudo apt dist-upgrade
+pip3 install pysimplegui
+pip3 install psutil
+```
+Update PySimpleGUI (if necessary):
+```
+python3 -m pip install --upgrade pysimplegui
+```
+Update psutil (if necessary):
+```
+python3 -m pip install --upgrade psutil
+```
 ....
 
 ## Update:
