@@ -7,15 +7,25 @@ def menus():
     sg.set_options(element_padding=(0, 0))
 
     # ------ Menu Definition ------ #
-    menu_def = [['&File', ['&Open     Ctrl-O', '&Save       Ctrl-S', '&Properties', 'E&xit']],
-                ['&Edit', ['&Paste', ['Special', 'Normal', ], 'Undo'], ],
+    menu_def = [['&Program', ['&Settings',
+                              'E&xit', '---',
+                              '&About Pi Fusion',
+                              '&Credits',
+                              '&Donation']],
+                ['&Info', ['&Board & SoC',
+                           '&CPU',
+                           '&Interfaces', ['&Audio / Video', '&GPIO status', '&USB devices',],
+                           '&Memory',
+                           '&Network',
+                           '&Operating system', ['&Cron jobs', '&General info', '&Kernel modules', 'Running &processes', 'Running &services', '&Software packages', '&Users & groups'],
+                           '&Storage']],
                 ['&Monitor'],
                 ['&Control'],
-                ['&Info'],
-                ['&Docs'],
-                ['&Toolbar', ['---', 'Command &1', 'Command &2',
+                ['&Tools', ['---', 'Command &1', 'Command &2',
                               '---', 'Command &3', 'Command &4']],
-                ['&Help', '&About Pi Fusion...'], ]
+                ['&Add-ons'],
+                ['&Docs'],
+               ]
 
     right_click_menu = ['Unused', ['Right', '!&Click', '&Menu', 'E&xit', 'Properties']]
 
@@ -42,7 +52,7 @@ def menus():
             break
         print(event, values)
         # ------ Process menu choices ------ #
-        if event == 'About Pi Fusion...':
+        if event == 'About Pi Fusion':
             window.disappear()
             sg.popup('About this program', 'Version 0.10',
                      'PySimpleGUI Version', sg.version,  grab_anywhere=True)

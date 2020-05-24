@@ -27,11 +27,11 @@ Pi Fusion is still in the development stage and some things are still not workin
 
 ## Installation:
 
-### Install necessary packages:
+### Install necessary packages
 
 ```
 sudo apt-get update && sudo apt-get dist-upgrade
-sudo apt-get install -y gpiozero git
+sudo apt-get install -y gpiozero git python3-picamera
 pip3 install pysimplegui
 pip3 install psutil
 cd ~
@@ -39,16 +39,17 @@ git clone https://github.com/ElectroDrome/raspberry-pi-fusion.git
 cd raspberry-pi-fusion
 git pull https://github.com/ElectroDrome/raspberry-pi-fusion.git master
 ```
-#### Upgrade Python packages (if necessary):
+#### Upgrade Python packages (if necessary)
 ```
 python3 -m pip install --upgrade pysimplegui
 python3 -m pip install --upgrade psutil
 ```
 ## Update:
 
-### Automatic Update (recommended)
+### Automatically
+ Update:
 Go in Pi Fusion to the settings. Here is automatically checked if a new version is present. If a new version is available you can click **Install update**.
-### Manual Update
+### Manual
 ```
 cd ~
 cd raspberry-pi-fusion
@@ -58,5 +59,5 @@ git pull https://github.com/ElectroDrome/raspberry-pi-fusion.git master
 ```
 cd ~
 cd raspberry-pi-fusion
-python3 pi-fusion
+python3 pifusion.py
 ```
