@@ -36,8 +36,6 @@ pip3 install pysimplegui
 pip3 install psutil
 cd ~
 git clone https://github.com/ElectroDrome/raspberry-pi-fusion.git
-cd raspberry-pi-fusion
-git pull https://github.com/ElectroDrome/raspberry-pi-fusion.git master
 ```
 #### Upgrade Python packages (if necessary)
 ```
