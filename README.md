@@ -31,7 +31,7 @@ Pi Fusion is still in the development stage and some things are still not workin
 
 ```
 sudo apt-get update && sudo apt-get dist-upgrade
-sudo apt-get install -y gpiozero git python3-picamera
+sudo apt-get install -y python3-gpiozero git python3-picamera
 pip3 install pysimplegui
 pip3 install psutil
 cd ~
