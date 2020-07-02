@@ -1,5 +1,6 @@
 #!/usr/bin python3
 from src.windows import *
+import RPi.GPIO as GPIO
 
 def menus():
 
@@ -17,17 +18,18 @@ def menus():
                               '&About Pi Fusion',
                               '&Credits',
                               '&Donation']],
+                ['&Control'],
                 ['&Info', ['&Board',
-                           '&SoC (CPU & GPU)', ['&CPU', ['CPU &details', 'CPU &times'],'&GPU', '&SoC', ['SoC details']],
-                           '&Disk',
-                           '&Interfaces', ['&Audio / Video', '&GPIO status', '&USB devices'],
-                           '&Memory', ['Memory &details', 'Memory &usage'],
-                           '&!Network',
+                           '&SoC (CPU & GPU)', ['&CPU Details', '&GPU', '&SoC Details'],
+                           '&Disk', ['&Partitions Details'],
+                           '&Interfaces', ['&Audio / Video', '&GPIO Status', '&USB Devices'],
+                           '&Memory', ['Memory &Details'],
+                           #'&!Network',
+                           '&Network',
                            '&Operating system', ['&Cron jobs', '&General info', '&Kernel modules', 'Running &processes', 'Running &services', '&Software packages', '&Users & groups'],
                             ],
                  ],
                 ['&Monitor'],
-                ['&Control'],
                 ['&Tools', ['---', 'Command &1', 'Command &2',
                               '---', 'Command &3', 'Command &4']],
                 ['&Add-ons'],
@@ -105,21 +107,34 @@ def menus():
             [sg.Text('Network:', size=(10, 1)), sg.Text('recv', size=(4, 1)), sg.Text(win_net_io_recv_text, size=(10, 1), key='net_io_recv_text'), sg.Text('sent', size=(4, 1)), sg.Text(win_net_io_sent_text, size=(10, 1), key='net_io_sent_text'), sg.Text('total', size=(4, 1)), sg.Text(win_net_io_total_text, size=(10, 1), key='net_io_total_text')],
             [sg.Text('Hostname:', size=(10, 1)), sg.Text(sys_hostname(), size=(15, 1)), sg.Text('Connections:', size=(12, 1)), sg.Text(win_net_conn, size=(5, 1), key='net_conn'), sg.Text('Users:', size=(6, 1)), sg.Text(win_sys_users, size=(4, 1), key='sys_users')],
             [sg.Text('IP LAN:', size=(7, 1)), sg.Text('xxx.xxx.xxx.xxx', size=(10, 1)), sg.Text('IP WLAN:', size=(9, 1)), sg.Text('xxx.xxx.xxx.xxx', size=(10, 1)), sg.Text('IP extern:', size=(8, 1)), sg.Text('xxx.xxx.xxx.xxx', size=(10, 1))],
-            # [sg.Text('')],
+            [sg.Text('LINE')],
             [sg.Spin(['100', '200', '300', '400', '500', '600', '700', '800', '900'], initial_value='900', key='-spin-'), sg.Text('milliseconds update interval')]
     ]
+
 
     ################################
     # ------ GUI Definition ------ #
     ################################
 
+    # layout horizontal
+    # layout = [
+    #     [sg.Menu(menu_def, tearoff=False, pad=(200, 1))],
+    #     [sg.Column(col1), sg.VerticalSeparator(pad=(1,5)), sg.Column(col2)],      # horizontal
+    # ]
+
+    # layout vertical
+    # layout = [
+    #     [sg.Menu(menu_def, tearoff=False, pad=(200, 1))],
+    #       [sg.Column(col1)],      # vertical
+    #       [sg.Text('_'*55)],       # seperator
+    #       [sg.Column(col2)],      # vertical
+    # ]
+
+    # layout tab
     layout = [
         [sg.Menu(menu_def, tearoff=False, pad=(200, 1))],
-        #  [sg.Column(col1), sg.VerticalSeparator(pad=(1,5)), sg.Column(col2)],      # horizontal
-          [sg.Column(col1)],      # vertical
-          [sg.Text('_'*55)],       # seperator
-          [sg.Column(col2)],      # vertical
-    ]
+        [sg.TabGroup([[sg.Tab('Status', col1), sg.Tab('Info', col2)]])],
+         ]
 
     window_main = sg.Window("Pi Fusion",
                        layout,
@@ -266,19 +281,27 @@ def menus():
         elif event == 'Open':
             filename = sg.popup_get_file('file to open', no_window=True)
             print(filename)
-        elif event == 'CPU details':
+        elif event == 'CPU Details':
             window_main.Hide()
             window_cpu_details()
             window_main.UnHide()
-        elif event == 'CPU times':
+        elif event == 'CPU Times':
             window_main.Hide()
             window_cpu_times()
             window_main.UnHide()
-        elif event == 'Memory details':
+        elif event == 'Memory Details':
             window_main.Hide()
-            window_mem_meminfo()
+            window_memory_details()
             window_main.UnHide()
-        elif event == 'SoC details':
+        elif event == 'GPIO Status':
+            window_main.Hide()
+            window_gpio_mini()
+            window_main.UnHide()
+        elif event == 'Partitions Details':
+            window_main.Hide()
+            window_disk_partitions()
+            window_main.UnHide()
+        elif event == 'SoC Details':
             window_main.Hide()
             window_soc_details()
             window_main.UnHide()

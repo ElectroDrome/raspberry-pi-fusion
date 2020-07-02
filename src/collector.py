@@ -1,19 +1,12 @@
 # ------ built-in modules ------ #
 import os
 import subprocess as sp
+import gpiozero as gz
+import RPi.GPIO as GPIO
 from datetime import timedelta
 
 # ------ pip modules ------ #
 import psutil
-
-# ------ General ------ #
-# ------ Board ------ #
-# ------ CPU ------ #
-# ------ SoC ------ #
-# ------ Disk ------ #
-# ------ Memory ------ #
-# ------ Network ------ #
-# ------ System ------ #
 
 # import os
     # tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
@@ -56,12 +49,12 @@ def board_model():
 
 def cpu_freq():
     freq = psutil.cpu_freq()
-    result = {}
-    result['current'] = freq[0],
-    result['min'] = freq[1],
-    result['max'] = freq[2],
-    result['pct'] = round((freq[0] / freq[2] * 100), 1),   # global
-    return result
+    d = {}
+    d['current'] = freq[0],
+    d['min'] = freq[1],
+    d['max'] = freq[2],
+    d['pct'] = round((freq[0] / freq[2] * 100), 1),   # global
+    return d
 
 def cpu_load():
     result = psutil.cpu_percent(interval=1)    # freeze 1 sec
@@ -84,76 +77,40 @@ def cpu_temp():
 
 def cpu_times():
     # user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice
-    result = dict(psutil.cpu_times()._asdict())
-
-    result['CPU time user'] = result.pop('user')
-    time_temp = result['CPU time user']
-    result['CPU time user'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time nice'] = result.pop('nice')
-    time_temp = result['CPU time nice']
-    result['CPU time nice'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time system'] = result.pop('system')
-    time_temp = result['CPU time system']
-    result['CPU time system'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time idle'] = result.pop('idle')
-    time_temp = result['CPU time idle']
-    result['CPU time idle'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time iowait'] = result.pop('iowait')
-    time_temp = result['CPU time iowait']
-    result['CPU time iowait'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time irq'] = result.pop('irq')
-    time_temp = result['CPU time irq']
-    result['CPU time irq'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time softirq'] = result.pop('softirq')
-    time_temp = result['CPU time softirq']
-    result['CPU time softirq'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time steal'] = result.pop('steal')
-    time_temp = result['CPU time steal']
-    result['CPU time steal'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time guest'] = result.pop('guest')
-    time_temp = result['CPU time guest']
-    result['CPU time guest'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    result['CPU time guest_nice'] = result.pop('guest_nice')
-    time_temp = result['CPU time guest_nice']
-    result['CPU time guest_nice'] = "{:0>8}".format(str(timedelta(seconds=time_temp)))
-
-    return result
+    d = dict(psutil.cpu_times()._asdict())
+    for key in list(d.keys()):
+        key2 = str('CPU time ') + str(key)   # new key
+        d[str(key2)] = d.pop(key)   # set new key and delete old key
+        time_temp = d[key2] # get time
+        d[key2] = "{:0>8}".format(str(timedelta(seconds=time_temp)))    # format time
+    return d
 
 def cpu_details1():
     # Architecture, Byte Order, CPU(s), On-line CPU(s) list, Thread(s) per core, Core(s) per socket, Socket(s), Vendor ID, Model, Model name, Stepping, CPU max MHz, CPU min MHz, BogoMIPS, Flags
     process = sp.run('lscpu', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
     # result = dict(line.split(':', 1)
-    result = dict(map(str.strip, line.split(':', 1))
+    d = dict(map(str.strip, line.split(':', 1))
         for line in output.split('\n') if ':' in line)
-    return result
+    return d
 
 def cpu_details2():
     # Hardware, Revision, Serial, Model, freq, temp
     process = sp.run('cat /proc/cpuinfo', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result1 = dict(map(str.strip, line.split(':', 1))
+    d1 = dict(map(str.strip, line.split(':', 1))
         for line in output.split('\n') if ':' in line)
     # result = {key: val for key, val in result1.items() if key == 'Hardware' or key == 'Revision' or key == 'Serial' or key == 'Model'}
-    result = {key: val for key, val in result1.items() if key == 'Hardware' or key == 'Revision' or key == 'Serial'}
-    result['CPU frequency MHz'] = cpu_freq().get('current')[0]
-    result['CPU temperature °C'] = cpu_temp()[0]
-    result['CPU load %'] = cpu_load_avg_pct()[0]
-    return result
+    d = {key: val for key, val in d1.items() if key == 'Hardware' or key == 'Revision' or key == 'Serial'}
+    d['CPU frequency MHz'] = cpu_freq().get('current')[0]
+    d['CPU temperature °C'] = cpu_temp()[0]
+    d['CPU load %'] = cpu_load_avg_pct()[0]
+    return d
 
 def cpu_stats():
     # ctx_switches, interrupts, soft_interrupts, syscalls
-    result = dict(psutil.cpu_stats()._asdict())
-    return result
+    d = dict(psutil.cpu_stats()._asdict())
+    return d
 
 #####################
 # ------ SoC ------ #
@@ -166,13 +123,12 @@ def soc_clocks():
     # clocks = ['arm', 'core', 'h264', 'isp', 'v3d', 'uart', 'pwm', 'emmc', 'pixel', 'vec', 'hdmi', 'dpi']
     process = sp.run('for src in arm core h264 isp v3d uart pwm emmc pixel vec hdmi dpi ; do echo "$src: $(/opt/vc/bin/vcgencmd measure_clock $src)" ; done', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split(':'))
-        for line in output.split('\n') if ':' in line
-        )
-    for key in result.keys():
-        result[key] = result[key].split("=", 1)
-        result[key] = str(int(result[key][1]) / 1000000) + str(' MHz')     # calc/add MHz
-    return result
+    d = dict(map(str.strip, line.split(':'))
+        for line in output.split('\n') if ':' in line)
+    for key in d.keys():
+        d[key] = d[key].split("=", 1)
+        d[key] = str(int(d[key][1]) / 1000000) + str(' MHz')     # calc/add MHz
+    return d
 
 def soc_codecs():
     # https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
@@ -181,13 +137,12 @@ def soc_codecs():
     # codecs = ['AGIF', 'FLAC', 'H263', 'H264', 'MJPA', 'MJPB', 'MJPG', 'MPG2', 'MPG4', 'MVC0', 'PCM', 'THRA', 'VORB', 'VP6', 'VP8', 'WMV9', 'WVC1']
     process = sp.run('for codec in AGIF FLAC H263 H264 MJPA MJPB MJPG MPG2 MPG4 MVC0 PCM THRA VORB VP6 VP8 WMV9 WVC1 ; do echo "$codec: $(/opt/vc/bin/vcgencmd codec_enabled $codec)" ; done', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split(':'))
-        for line in output.split('\n') if ':' in line
-        )
-    for key in result.keys():
-        result[key] = result[key].split("=", 1)
-        result[key] = result[key][1]
-    return result
+    d = dict(map(str.strip, line.split(':'))
+        for line in output.split('\n') if ':' in line)
+    for key in d.keys():
+        d[key] = d[key].split("=", 1)
+        d[key] = d[key][1]
+    return d
 
 def soc_config():
     # https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
@@ -195,10 +150,9 @@ def soc_config():
 
     process = sp.run('vcgencmd get_config int', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split('='))
-        for line in output.split('\n') if '=' in line
-        )
-    return result
+    d = dict(map(str.strip, line.split('='))
+                for line in output.split('\n') if '=' in line)
+    return d
 
 def soc_volts():
     # https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
@@ -208,63 +162,71 @@ def soc_volts():
     process = sp.run('for volt in core sdram_c sdram_i sdram_p ; do echo "$volt: $(/opt/vc/bin/vcgencmd measure_volts $volt)" ; done',
         shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split(':'))
-        for line in output.split('\n') if ':' in line
-        )
-    for key in result.keys():
-        result[key] = result[key].split("=", 1)
-        result[key] = result[key][1]
+    d = dict(map(str.strip, line.split(':'))
+        for line in output.split('\n') if ':' in line)
+    for key in d.keys():
+        d[key] = d[key].split("=", 1)
+        d[key] = d[key][1]
+    return d
+
+def soc_firmware():
+    # https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
+    # https://elinux.org/RPI_vcgencmd_usage
+
+    process = sp.run('vcgencmd version', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
+    output = process.stdout
+    result = output.split('\n')
+    result.pop(3)   # delete last trash value ''
     return result
+print(soc_firmware())
 
 ########################
 # ------ Memory ------ #
 ########################
 
-def mem_info():     # v02
+def mem_info():
     # total, available, percent, used, free, active, inactive, buffers, cached, shared, slab
-    result = dict(psutil.virtual_memory()._asdict())
-    result['total'] = bytes2human(result['total'])
-    result['available'] = bytes2human(result['available'])
-    result['used'] = bytes2human(result['used'])
-    result['free'] = bytes2human(result['free'])
-    result['active'] = bytes2human(result['active'])
-    result['inactive'] = bytes2human(result['inactive'])
-    result['buffers'] = bytes2human(result['buffers'])
-    result['cached'] = bytes2human(result['cached'])
-    result['shared'] = bytes2human(result['shared'])
-    result['slab'] = bytes2human(result['slab'])
-    return result
-
-# def mem_info():    # v01
-#     mem = psutil.virtual_memory()
-#     result = {}
-#     result['total'] = mem[0],
-#     result['available'] = mem[1],
-#     result['percent'] = mem[2],
-#     result['used'] = mem[3],
-#     result['free'] = mem[4],
-#     result['active'] = mem[5],
-#     result['inactive'] = mem[6],
-#     result['buffers'] = mem[7],
-#     result['cached'] = mem[8],
-#     result['shared'] = mem[9],
-#     result['slab'] = mem[10]
-#     return result
+    d = dict(psutil.virtual_memory()._asdict())
+    d['total'] = bytes2human(d['total'])
+    d['available'] = bytes2human(d['available'])
+    d['used'] = bytes2human(d['used'])
+    d['free'] = bytes2human(d['free'])
+    d['active'] = bytes2human(d['active'])
+    d['inactive'] = bytes2human(d['inactive'])
+    d['buffers'] = bytes2human(d['buffers'])
+    d['cached'] = bytes2human(d['cached'])
+    d['shared'] = bytes2human(d['shared'])
+    d['slab'] = bytes2human(d['slab'])
+    return d
 
 def mem_meminfo():
     process = sp.run('cat /proc/meminfo', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split(':', 1))
+    d = dict(map(str.strip, line.split(':', 1))
         for line in output.split('\n') if ':' in line)
+    return d
+
+def mem_usage():
+    # 13.2  1135 pi       /usr/lib/jvm/
+    process = sp.run('ps -e -o pmem,pid,user,args --sort=-pmem | sed "/^ 0.0 /d" | grep -v MEM', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
+    output = process.stdout
+    result = output.split('\n')
+    i = 0
+    for i in range(len(result)):
+        mem_percent = result[i][:4].strip()
+        pid = result[i][5:11].strip()
+        user = result[i][11:19].strip()
+        command = result[i][20:100].strip()
+        result[i] = [mem_percent, pid, user, command]
     return result
 
 def mem_swap():
     # total, used, free, percent, sin, sout
-    result = dict(psutil.swap_memory()._asdict())
-    result['total'] = bytes2human(result['total'])
-    result['used'] = bytes2human(result['used'])
-    result['free'] = bytes2human(result['free'])
-    return result
+    d = dict(psutil.swap_memory()._asdict())
+    d['total'] = bytes2human(d['total'])
+    d['used'] = bytes2human(d['used'])
+    d['free'] = bytes2human(d['free'])
+    return d
 
 ######################
 # ------ Disk ------ #
@@ -272,20 +234,38 @@ def mem_swap():
 
 def disk_info():
     # total, used, free, percent
-    result = dict(psutil.disk_usage('/')._asdict())
-    result['total'] = bytes2human(result['total'])
-    result['used'] = bytes2human(result['used'])
-    result['free'] = bytes2human(result['free'])
-    return result
+    d = dict(psutil.disk_usage('/')._asdict())
+    d['total'] = bytes2human(d['total'])
+    d['used'] = bytes2human(d['used'])
+    d['free'] = bytes2human(d['free'])
+    return d
 
 def disk_io_counters():
     # read_count, write_count, read_bytes, write_bytes, read_time, write_time, read_merged_count, write_merged_count, busy_time, total_bytes
-    result = dict(psutil.disk_io_counters()._asdict())
-    result['total_bytes'] = result['read_bytes'] + result['write_bytes']
-    result['total_bytes'] = bytes2human(result['total_bytes'])
-    result['read_bytes'] = bytes2human(result['read_bytes'])
-    result['write_bytes'] = bytes2human(result['write_bytes'])
-    return result
+    d = dict(psutil.disk_io_counters()._asdict())
+    d['total_bytes'] = d['read_bytes'] + d['write_bytes']
+    d['total_bytes'] = bytes2human(d['total_bytes'])
+    d['read_bytes'] = bytes2human(d['read_bytes'])
+    d['write_bytes'] = bytes2human(d['write_bytes'])
+    return d
+
+def disk_partitions():
+    # [('/', '/dev/root', 99.1, 'ext4', '/', 'rw,noatime', '1.343TB'),
+    partitions = []
+    for partition in psutil.disk_partitions(all=True):
+        try:
+            pdiskusage = psutil.disk_usage(partition.mountpoint)
+            partitions.append((partition.mountpoint,
+                partition.device,
+                100.0 - pdiskusage.percent,
+                partition.fstype,
+                partition.mountpoint,
+                partition.opts,
+                bytes2human(pdiskusage.total),
+            ))
+        except OSError:
+            continue
+    return partitions
 
 #########################
 # ------ Network ------ #
@@ -293,12 +273,12 @@ def disk_io_counters():
 
 def net_io_counters():
     # bytes_sent, bytes_recv, packets_sent, packets_recv, errin, errout, dropin, dropout, total_bytes
-    result = dict(psutil.net_io_counters()._asdict())
-    result['total_bytes'] = result['bytes_recv'] + result['bytes_sent']
-    result['total_bytes'] = bytes2human(result['total_bytes'])
-    result['bytes_recv'] = bytes2human(result['bytes_recv'])
-    result['bytes_sent'] = bytes2human(result['bytes_sent'])
-    return result
+    d = dict(psutil.net_io_counters()._asdict())
+    d['total_bytes'] = d['bytes_recv'] + d['bytes_sent']
+    d['total_bytes'] = bytes2human(d['total_bytes'])
+    d['bytes_recv'] = bytes2human(d['bytes_recv'])
+    d['bytes_sent'] = bytes2human(d['bytes_sent'])
+    return d
 
 def net_connections():
     process = sp.run('netstat -nta --inet | wc -l', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
@@ -334,10 +314,10 @@ def sys_firmware():
 def sys_dist():
     process = sp.run('cat /etc/*-release | grep PRETTY_NAME=', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
     output = process.stdout
-    result = dict(map(str.strip, line.split('=', 1))
+    d = dict(map(str.strip, line.split('=', 1))
         for line in output.split('\n') if '=' in line)
-    result = result['PRETTY_NAME'].strip('"')
-    return result
+    d = d['PRETTY_NAME'].strip('"')
+    return d
 
 def sys_hostname():
     process = sp.run('hostname -f', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
@@ -349,4 +329,76 @@ def sys_users_online():
     result = process.stdout
     return result
 
+def sys_modules():
+    # btbcm                  16384  1 hci_uart
+    process = sp.run('lsmod | grep -v Size', shell=True, check=True, stdout=sp.PIPE, universal_newlines=True)
+    output = process.stdout
+    result = output.split('\n')
+    i = 0
+    #for i in range(len(result)):
+     #   result[i] = str(result[i].split(' '))
+    #     size = result[i][5:11].strip()
+    #     used = result[i][11:19].strip()
+    #     by = result[i][20:100].strip()
+    #     result[i] = module, size, used, by
+    return result
+# print(sys_modules())
 
+#####################################################################
+
+def test():
+    # total, used, free, percent
+    gpios = '2,5,7,8,10,11,12,15,16,18,19,21,22,23,24,26'
+    process = sp.run('raspi-gpio get ' + gpios, shell=True, check=True, stdout=sp.PIPE,
+                     universal_newlines=True)
+    output = process.stdout
+    d = dict(map(str.strip, line.split(':', 1))
+        for line in output.split('\n') if ':' in line
+                  )
+    for key in list(d.keys()):
+        key2 = str(key.replace(' ', ''))
+        d[str(key2)] = d.pop(key)
+
+    for key, value in list(d.items()):
+        d[key] = str(d[key]).split(' ')
+
+        d[key][0] = d[key][0].strip('level=')
+        d[key][1] = d[key][1].strip('fsel=')
+        if d[key][1] != '0':
+            d[key][2] = d[key][2].strip('alt=')
+            d[key][3] = d[key][3].strip('func=')
+            d[key][4] = d[key][4].strip('pull=')
+        else:
+            d[key][2] = d[key][2].strip('func=')
+            d[key][3] = d[key][3].strip('pull=')
+
+    #print('{0}'.format(pi_info().headers['J8']))
+    #print('{0:full}'.format(pi_info().headers['J8']))
+    #print(pi_info().headers['J8'])
+    #print(pi_info().headers['J8'].pins[3])
+    print(gz.pi_info().revision)
+    #print(pi_info().soc)
+    #print(pi_info().board)
+    #print('{0}'.format(pi_info()))
+    #                                       print('{0:board}'.format(gz.pi_info()))
+    # GPIO.setmode(GPIO.BOARD)  # 10
+    if (GPIO.getmode() != 11):
+        GPIO.setmode(GPIO.BCM)
+    mode = GPIO.getmode()
+
+    print(mode)
+
+
+
+
+    # for key in list(d.keys()):
+    #     len1 = len(d[key])      # count values
+    #     for i in range(len1):
+    #         d[i] = d[key][i].split('=')
+    #         d[i] = {d[i][0]:d[i][1]}
+    #         print (key, i, d[i])
+
+    #print (d['GPIO2'][0], d['GPIO2'][1])
+    return d
+
+print(test())
