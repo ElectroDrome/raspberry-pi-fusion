@@ -34,7 +34,6 @@ sudo apt-get update && sudo apt-get dist-upgrade
 sudo apt-get install -y python3-gpiozero git python3-picamera
 pip3 install pysimplegui
 pip3 install psutil
-pip3 install RPIO
 cd ~
 git clone https://github.com/ElectroDrome/raspberry-pi-fusion.git
 ```
@@ -42,7 +41,6 @@ git clone https://github.com/ElectroDrome/raspberry-pi-fusion.git
 ```
 python3 -m pip install --upgrade pysimplegui
 python3 -m pip install --upgrade psutil
-python3 -m pip install --upgrade RPIO
 ```
 Upgrade Wiring Pi
 ```
